@@ -60,8 +60,10 @@ export const loginUser = async (data: LoginBody): Promise<LoginResult> => {
   if (!user) {
     const error = new Error("Credenciales incorrectas") as Error & {
       statusCode: number;
+      reason?: string;
     };
     error.statusCode = 401;
+    error.reason = "user_not_found";
     throw error;
   }
 
@@ -71,8 +73,10 @@ export const loginUser = async (data: LoginBody): Promise<LoginResult> => {
   if (!isPasswordValid) {
     const error = new Error("Credenciales incorrectas") as Error & {
       statusCode: number;
+      reason?: string;
     };
     error.statusCode = 401;
+    error.reason = "invalid password";
     throw error;
   }
 
