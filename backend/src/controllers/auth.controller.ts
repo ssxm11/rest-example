@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { registerUser, loginUser } from "../services/auth.service";
 import { RegisterBody, LoginBody } from "../middlewares/validate.middleware";
+import { logger } from "../config/logger";
+import { getHttpLogContext } from "../utils/log-context";
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -21,8 +23,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Error inesperado del servidor
-    console.error("[register]", err);
+    logger.error(
+      {
+        event: "register_error",
+        ...getHttpLogContext(req),
+        status_code: 500,
+        err,
+      },
+      "Error inesperado durante registro",
+    );
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
@@ -49,14 +58,33 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user,
     });
   } catch (error) {
-    const err = error as Error & { statusCode?: number };
+    const err = error as Error & { statusCode?: number; reason?: string };
 
     if (err.statusCode) {
+      logger.warn(
+        {
+          event: "login_failed",
+          ...getHttpLogContext(req),
+          email: (req.body as Partial<LoginBody>).email?.toLowerCase(),
+          status_code: err.statusCode,
+          reason: err.reason ?? "controlled_error",
+        },
+        "Intento de autenticacion fallido",
+      );
       res.status(err.statusCode).json({ message: err.message });
       return;
     }
 
-    console.error("[login]", err);
+    logger.error(
+      {
+        event: "login_error",
+        ...getHttpLogContext(req),
+        email: (req.body as Partial<LoginBody>).email?.toLowerCase(),
+        status_code: 500,
+        err,
+      },
+      "Error inesperado durante login",
+    );
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
