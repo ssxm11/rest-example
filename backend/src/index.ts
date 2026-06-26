@@ -64,3 +64,11 @@ connectDB()
     );
     process.exit(1);
   });
+  
+app.use((req, res, next) => {
+  console.log("📨 REQUEST:", req.method, req.path);
+  next();
+});
+
+app.use("/auth", authRoutes);
+app.use("/profile", profileRoutes);
